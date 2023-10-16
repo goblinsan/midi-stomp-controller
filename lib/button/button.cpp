@@ -1,32 +1,49 @@
-#include "button.h"
+#ifndef MIDI_STOMP_CONTROLLER_BUTTONDEF_H
+#define MIDI_STOMP_CONTROLLER_BUTTONDEF_H
 
-button::button(int8_t i) : switch_index{i} {
-}
+#include "iButton.h"
 
-button::button(int8_t i, bool p) : switch_index{i}, isPullUp{p} {
-    if (!isPullUp) {
-        defaultState = LOW;
-        currentState = LOW;
-        lastState = LOW;
-    }
-}
+class button : public iButton {
+public:
+    explicit button(int8_t i) : switch_index{i} {}
 
-int16_t button::readState() const{
-    return digitalRead(switch_index);
-}
-
-bool button::isSwitched() {
-    if (currentState != lastState) {
-        if ((millis() - lastDebounceTime) > debounceDelay) {
-            lastState = currentState;
-            lastDebounceTime = millis();
-            return true;
+    button(int8_t i, bool p) : switch_index{i}, isPullUp{p} {
+        if (!isPullUp) {
+            defaultState = LOW;
+            currentState = LOW;
+            lastState = LOW;
         }
     }
-    return false;
-}
 
-bool button::isDown() const {
-    return currentState != defaultState;
-}
+    int readState() override {
+        currentState = digitalRead(switch_index);
+        return currentState;
+    }
 
+    bool isSwitched() override {
+        if (currentState != lastState) {
+            unsigned long clockTime = millis();
+            if ((clockTime - lastDebounceTime) > debounceDelay) {
+                lastState = currentState;
+                lastDebounceTime = clockTime;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool isDown() override {
+        return currentState != defaultState;
+    }
+private:
+    const unsigned long debounceDelay = 50;
+    unsigned long lastDebounceTime = 0;
+    bool isPullUp = true;
+    int defaultState = HIGH;
+    int currentState = HIGH;
+    int lastState = HIGH;
+protected:
+    int8_t switch_index = 0;
+};
+
+#endif

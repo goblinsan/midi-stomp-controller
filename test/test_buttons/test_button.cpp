@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
-#include "button.h"
-#include "muxButton.h"
+#include "button.cpp"
+#include "muxButton.cpp"
 #include <ArduinoFake.h>
 
 using namespace fakeit;
 
-TEST(readButton, nonMuxRead){
+TEST(readButton, nonMuxRead) {
     int8_t testPin = 4;
     int randoNumber = 42;
     button b(testPin);
@@ -14,15 +14,27 @@ TEST(readButton, nonMuxRead){
     EXPECT_EQ(randoNumber, b.readState());
 }
 
-TEST(button, defaultNotDown){
-    const button b(8);
+TEST(button, defaultNotDown) {
+    button b(8);
     GTEST_EXPECT_FALSE(b.isDown());
 }
 
-TEST(mux, bitShiftyReadings){
-    const int sp[4] = {3,4,5,6};
-    muxButton mb(0,2,sp);
-    muxButton mb2(10,2,sp);
+TEST(button, switched) {
+    button b(4);
+    When(Method(ArduinoFake(Function), millis)).Return(55, 120, 122);
+    When(Method(ArduinoFake(), digitalRead).Using(4)).Return(LOW,HIGH,LOW);
+    b.readState();
+    EXPECT_TRUE(b.isSwitched());
+    b.readState();
+    EXPECT_TRUE(b.isSwitched());
+    b.readState();
+    GTEST_EXPECT_FALSE(b.isSwitched());
+}
+
+TEST(mux, bitShiftyReadings) {
+    const int sp[4] = {3, 4, 5, 6};
+    muxButton mb(0, 2, sp);
+    muxButton mb2(10, 2, sp);
 
     When(Method(ArduinoFake(), digitalWrite)).AlwaysReturn();
     When(Method(ArduinoFake(), digitalRead).Using(2)).Return(7);
@@ -49,10 +61,10 @@ TEST(mux, bitShiftyReadings){
 }
 
 #if defined(ARDUINO)
+
 #include <Arduino.h>
 
-void setup()
-{
+void setup() {
     // should be the same value as for the `test_speed` option in "platformio.ini"
     // default value is test_speed=115200
     Serial.begin(115200);
@@ -60,11 +72,9 @@ void setup()
     ::testing::InitGoogleTest();
 }
 
-void loop()
-{
+void loop() {
     // Run tests
-    if (RUN_ALL_TESTS())
-        ;
+    if (RUN_ALL_TESTS());
 
     // sleep 1 sec
     delay(1000);
@@ -74,9 +84,9 @@ void loop()
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-	if (RUN_ALL_TESTS())
-	;
-	// Always return zero-code and allow PlatformIO to parse results
-	return 0;
+    if (RUN_ALL_TESTS())
+    ;
+    // Always return zero-code and allow PlatformIO to parse results
+    return 0;
 }
 #endif
