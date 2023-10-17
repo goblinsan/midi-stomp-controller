@@ -1,20 +1,49 @@
-#include "buttonAgent.h"
+#include "iButtonAgent.h"
 
-#include <utility>
+class buttonAgent : public iButtonAgent {
 
-buttonAgent::buttonAgent(iButton& b) : b{b} {
-}
+public:
 
-int buttonAgent::onPress() {
-    if(b.isSwitched() && b.isDown()){
-        return 0;
+    explicit buttonAgent(iButton &b) : iButtonAgent{b} {
+        if (!b.isPullUp()) {
+            defaultState = LOW;
+            currentState = LOW;
+            lastState = LOW;
+        }
     }
-    return 1;
-}
 
-int buttonAgent::onRelease() {
-    if(b.isSwitched() && b.isDown()){
-        return 1;
+    bool isSwitched() override {
+        currentState = b.readState();
+        if (currentState != lastState) {
+            unsigned long clockTime = millis();
+            if ((clockTime - lastDebounceTime) > debounceDelay) {
+                lastState = currentState;
+                lastDebounceTime = clockTime;
+                return true;
+            }
+        }
+        return false;
     }
-    return 0;
-}
+
+    bool isDown() override {
+        return currentState != defaultState;
+    }
+
+    int onPress() override {
+        return isSwitched() && isDown();
+    }
+
+    int onRelease() override {
+        return isSwitched() && !isDown();
+    }
+
+private:
+    const unsigned long debounceDelay = 50;
+    unsigned long lastDebounceTime = 0;
+    int defaultState = HIGH;
+    int currentState = HIGH;
+    int lastState = HIGH;
+};
+
+
+

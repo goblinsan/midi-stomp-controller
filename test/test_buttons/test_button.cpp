@@ -8,31 +8,30 @@ using namespace fakeit;
 TEST(readButton, nonMuxRead) {
     int8_t testPin = 4;
     int randoNumber = 42;
+    When(Method(ArduinoFake(), pinMode)).AlwaysReturn();
+
     button b(testPin);
+
     When(Method(ArduinoFake(), digitalRead).Using(testPin)).Return(randoNumber);
 
     EXPECT_EQ(randoNumber, b.readState());
 }
 
-TEST(button, defaultNotDown) {
-    button b(8);
-    GTEST_EXPECT_FALSE(b.isDown());
-}
+TEST(readButton, pullUp) {
+    int8_t testPin = 4;
+    When(Method(ArduinoFake(), pinMode)).AlwaysReturn();
 
-TEST(button, switched) {
-    button b(4);
-    When(Method(ArduinoFake(Function), millis)).Return(55, 120, 122);
-    When(Method(ArduinoFake(), digitalRead).Using(4)).Return(LOW,HIGH,LOW);
-    b.readState();
-    EXPECT_TRUE(b.isSwitched());
-    b.readState();
-    EXPECT_TRUE(b.isSwitched());
-    b.readState();
-    GTEST_EXPECT_FALSE(b.isSwitched());
+    button b(testPin);
+    EXPECT_TRUE(b.isPullUp());
+
+    button b_notPullUp(testPin, false);
+    EXPECT_FALSE(b_notPullUp.isPullUp());
 }
 
 TEST(mux, bitShiftyReadings) {
     const int sp[4] = {3, 4, 5, 6};
+    When(Method(ArduinoFake(), pinMode)).AlwaysReturn();
+
     muxButton mb(0, 2, sp);
     muxButton mb2(10, 2, sp);
 
@@ -41,10 +40,10 @@ TEST(mux, bitShiftyReadings) {
 
     EXPECT_EQ(7, mb.readState());
 
-    Verify(Method(ArduinoFake(), digitalWrite).Using(3, 0)).Exactly(1);
-    Verify(Method(ArduinoFake(), digitalWrite).Using(4, 0)).Exactly(1);
-    Verify(Method(ArduinoFake(), digitalWrite).Using(5, 0)).Exactly(1);
-    Verify(Method(ArduinoFake(), digitalWrite).Using(6, 0)).Exactly(1);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(3, 0)).Exactly(2);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(4, 0)).Exactly(2);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(5, 0)).Exactly(2);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(6, 0)).Exactly(2);
 
     ArduinoFake().ClearInvocationHistory();
 
@@ -53,9 +52,11 @@ TEST(mux, bitShiftyReadings) {
 
     mb2.readState();
 
-    Verify(Method(ArduinoFake(), digitalWrite).Using(3, 0)).Exactly(1);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(3, 0)).Exactly(2);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(4, 0)).Exactly(1); // init
     Verify(Method(ArduinoFake(), digitalWrite).Using(4, 1)).Exactly(1);
-    Verify(Method(ArduinoFake(), digitalWrite).Using(5, 0)).Exactly(1);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(5, 0)).Exactly(2);
+    Verify(Method(ArduinoFake(), digitalWrite).Using(6, 0)).Exactly(1); // init
     Verify(Method(ArduinoFake(), digitalWrite).Using(6, 1)).Exactly(1);
 
 }

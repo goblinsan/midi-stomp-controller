@@ -5,9 +5,8 @@
 class iButton {
 public:
     virtual ~iButton() = default;
+    virtual bool isPullUp() = 0;
     virtual int readState() = 0;
-    virtual bool isSwitched() = 0;
-    virtual bool isDown() = 0;
 };
 
 #endif //MIDI_STOMP_CONTROLLER_IBUTTON_H

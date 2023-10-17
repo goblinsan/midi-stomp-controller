@@ -1,40 +1,88 @@
 //#include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "buttonAgent.h"
+#include "buttonAgent.cpp"
 #include "iButton.h"
+
+#include <ArduinoFake.h>
+
+using namespace fakeit;
 
 using ::testing::Return;
 
 class MockButton : public iButton {
 public:
     MOCK_METHOD(int, readState, (), (override));
-    MOCK_METHOD(bool, isSwitched, (), (override));
-    MOCK_METHOD(bool, isDown, (), (override));
+    MOCK_METHOD(bool , isPullUp, (), (override));
 };
+
 
 TEST(agent, canMakeAgentWithButton) {
     MockButton mockButton;
     EXPECT_NO_THROW(buttonAgent ba(mockButton));
 }
 
+TEST(agent, isSwitched) {
+    MockButton mockButton;
+    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
+
+    buttonAgent ba(mockButton);
+
+    EXPECT_CALL(mockButton, readState())
+            .WillOnce(Return(LOW))
+            .WillOnce(Return(HIGH))
+            .WillOnce(Return(LOW));
+
+    When(Method(ArduinoFake(Function), millis)).Return(55, 120, 122);
+
+    EXPECT_TRUE(ba.isSwitched());
+    EXPECT_TRUE(ba.isSwitched());
+    GTEST_EXPECT_FALSE(ba.isSwitched());
+}
+
+TEST(agent, isDown) {
+    MockButton mockButton;
+    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
+
+    buttonAgent ba(mockButton);
+
+    GTEST_EXPECT_FALSE(ba.isDown());
+
+    EXPECT_CALL(mockButton, readState())
+            .WillOnce(Return(LOW));
+    When(Method(ArduinoFake(Function), millis)).Return(55);
+
+    EXPECT_TRUE(ba.isSwitched());
+
+    EXPECT_TRUE(ba.isDown());
+
+}
+
 TEST(agent, doOnPress) {
     MockButton mockButton;
-    EXPECT_CALL(mockButton, isSwitched())
-            .WillOnce(Return(true));
-    EXPECT_CALL(mockButton, isDown())
-            .WillOnce(Return(true));
+    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
+
     buttonAgent ba(mockButton);
-    EXPECT_EQ(0, ba.onPress());
+
+    EXPECT_CALL(mockButton, readState())
+            .WillOnce(Return(LOW));
+    When(Method(ArduinoFake(Function), millis)).Return(55);
+
+    EXPECT_TRUE(ba.onPress());
 }
 
 TEST(agent, doOnRelease) {
     MockButton mockButton;
-    EXPECT_CALL(mockButton, isSwitched())
-            .WillOnce(Return(true));
-    EXPECT_CALL(mockButton, isDown())
-            .WillOnce(Return(false));
+    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
+
     buttonAgent ba(mockButton);
-    EXPECT_EQ(0, ba.onRelease());
+
+    EXPECT_CALL(mockButton, readState())
+            .WillOnce(Return(LOW))
+            .WillOnce(Return(HIGH));
+    When(Method(ArduinoFake(Function), millis)).Return(55, 155);
+    ba.isSwitched();
+
+    EXPECT_TRUE(ba.onRelease());
 }
 
 

@@ -5,45 +5,36 @@
 
 class button : public iButton {
 public:
-    explicit button(int8_t i) : switch_index{i} {}
+    explicit button(int8_t i, bool p) : switch_index{i}, pullUp{p} {
+    }
 
-    button(int8_t i, bool p) : switch_index{i}, isPullUp{p} {
-        if (!isPullUp) {
-            defaultState = LOW;
-            currentState = LOW;
-            lastState = LOW;
-        }
+    explicit button(int8_t i) : button(i, true) {}
+
+    bool isPullUp() override{
+        return pullUp;
     }
 
     int readState() override {
-        currentState = digitalRead(switch_index);
-        return currentState;
-    }
-
-    bool isSwitched() override {
-        if (currentState != lastState) {
-            unsigned long clockTime = millis();
-            if ((clockTime - lastDebounceTime) > debounceDelay) {
-                lastState = currentState;
-                lastDebounceTime = clockTime;
-                return true;
-            }
+        if (!initialized){
+            setPins();
+            initialized = true;
         }
-        return false;
+        return digitalRead(switch_index);
     }
 
-    bool isDown() override {
-        return currentState != defaultState;
-    }
-private:
-    const unsigned long debounceDelay = 50;
-    unsigned long lastDebounceTime = 0;
-    bool isPullUp = true;
-    int defaultState = HIGH;
-    int currentState = HIGH;
-    int lastState = HIGH;
 protected:
     int8_t switch_index = 0;
+    bool pullUp = true;
+
+private:
+    bool initialized = false;
+    void setPins() const {
+        if (pullUp) {
+            pinMode(switch_index, INPUT_PULLUP);
+        } else {
+            pinMode(switch_index, INPUT);
+        }
+    }
 };
 
 #endif
