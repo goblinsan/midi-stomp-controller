@@ -1,8 +1,8 @@
 #ifndef MIDI_STOMP_CONTROLLER_IBUTTONAGENT_H
 #define MIDI_STOMP_CONTROLLER_IBUTTONAGENT_H
 
-
 #include "iButton.h"
+#include "midiStompTypes.h"
 
 class iButtonAgent {
 public:
@@ -10,7 +10,7 @@ public:
 
     explicit iButtonAgent(iButton &b) : b(b) {}
 
-    virtual bool isSwitched() = 0;
+    virtual buttonState getButtonState() = 0;
 
     virtual bool isDown() = 0;
 

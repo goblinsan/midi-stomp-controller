@@ -2,6 +2,7 @@
 #define MIDI_STOMP_CONTROLLER_INPUTLISTNER_H
 
 #include "iButtonAgent.h"
+#include "midiStompTypes.h"
 
 class inputListner {
 public:
@@ -11,6 +12,12 @@ public:
         }
     }
     bool actOnInput();
+
+protected:
+    int totalSteps = 10;
+    int currentStep = 0;
+    int octaveOffset = 5;
+    midiMode mode = NOTES;
 
 private:
     int numberOfButtons;

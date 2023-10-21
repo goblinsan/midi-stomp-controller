@@ -1,10 +1,11 @@
-
-//#include <gtest/gtest.h>
+// in Adafruit_TinyUSB.h we need to include these for the noteButtonAgent:
+//     #include "arduino/ports/esp32/tusb_config_esp32.h"
+//     #include "arduino/midi/Adafruit_USBD_MIDI.h"
 #include <gmock/gmock.h>
+#include <ArduinoFake.h>
 #include "iButton.h"
 #include "inputListner.h"
-
-#include <ArduinoFake.h>
+#include "midiStompTypes.h"
 
 using namespace fakeit;
 
@@ -20,7 +21,7 @@ class MockAgent : public iButtonAgent {
 public:
     MockButton mockButton;
     MockAgent() : iButtonAgent(mockButton) {}
-    MOCK_METHOD(bool, isSwitched, (), (override));
+    MOCK_METHOD(buttonState, getButtonState, (), (override));
     MOCK_METHOD(bool , isDown, (), (override));
     MOCK_METHOD(int , onPress, (), (override));
     MOCK_METHOD(int , onRelease, (), (override));
@@ -36,22 +37,22 @@ TEST(listner, canActOnInput) {
     inputListner testObject = inputListner(agents, 2);
 
 
-    EXPECT_CALL(mockAgent1, isSwitched())
-            .WillOnce(Return(true))
-            .WillOnce(Return(false))
-            .WillOnce(Return(false))
-            .WillOnce(Return(true));
+    EXPECT_CALL(mockAgent1, getButtonState)
+            .WillOnce(Return(UP))
+            .WillOnce(Return(UP))
+            .WillOnce(Return(UP))
+            .WillOnce(Return(UP));
 
-    EXPECT_CALL(mockAgent2, isSwitched())
-            .WillOnce(Return(false))
-            .WillOnce(Return(false))
-            .WillOnce(Return(true))
-            .WillOnce(Return(true));
+    EXPECT_CALL(mockAgent2, getButtonState)
+            .WillOnce(Return(UP))
+            .WillOnce(Return(UP))
+            .WillOnce(Return(UP))
+            .WillOnce(Return(UP));
 
-    EXPECT_TRUE(testObject.actOnInput()); // 1 is switched
+    EXPECT_FALSE(testObject.actOnInput()); // 1 is switched
     EXPECT_FALSE(testObject.actOnInput()); // none are switched
-    EXPECT_TRUE(testObject.actOnInput()); // 2 is switched
-    EXPECT_TRUE(testObject.actOnInput()); // both are switched
+    EXPECT_FALSE(testObject.actOnInput()); // 2 is switched
+    EXPECT_FALSE(testObject.actOnInput()); // both are switched
 }
 
 

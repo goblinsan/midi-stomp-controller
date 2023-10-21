@@ -12,78 +12,99 @@ using ::testing::Return;
 class MockButton : public iButton {
 public:
     MOCK_METHOD(int, readState, (), (override));
-    MOCK_METHOD(bool , isPullUp, (), (override));
+    MOCK_METHOD(bool, isPullUp, (), (override));
 };
 
 
 TEST(agent, canMakeAgentWithButton) {
     MockButton mockButton;
+    EXPECT_CALL(mockButton, isPullUp()).WillOnce(Return(true));
     EXPECT_NO_THROW(buttonAgent ba(mockButton));
 }
 
-TEST(agent, isSwitched) {
+TEST(agent, getButtonState_default) {
     MockButton mockButton;
-    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
+    EXPECT_CALL(mockButton, isPullUp()).WillOnce(Return(true));
+
+    buttonAgent ba(mockButton);
+
+    // Default case with no read
+    EXPECT_EQ(0, ba.getLastReadingTime());
+    EXPECT_FALSE(ba.isDown());
+    bool stChange = ba.stateChange();
+    bool readDeEx = ba.readDelayExpired();
+    EXPECT_FALSE(stChange);
+    EXPECT_FALSE(readDeEx);
+    EXPECT_FALSE(ba.isSwitched(stChange, readDeEx));
+}
+
+TEST(agent, getButtonState_pressed) {
+    MockButton mockButton;
+    EXPECT_CALL(mockButton, isPullUp()).WillOnce(Return(true));
+
+    buttonAgent ba(mockButton);
+
+    EXPECT_CALL(mockButton, readState()).WillOnce(Return(LOW));
+    When(Method(ArduinoFake(Function), millis)).Return(55);
+
+    // HIGH -> LOW after 55 millis
+    EXPECT_EQ(PRESSED, ba.getButtonState());
+}
+
+TEST(agent, getButtonState_held) {
+    MockButton mockButton;
+    EXPECT_CALL(mockButton, isPullUp()).WillOnce(Return(true));
 
     buttonAgent ba(mockButton);
 
     EXPECT_CALL(mockButton, readState())
             .WillOnce(Return(LOW))
-            .WillOnce(Return(HIGH))
             .WillOnce(Return(LOW));
+    When(Method(ArduinoFake(Function), millis)).Return(55, 60);
 
-    When(Method(ArduinoFake(Function), millis)).Return(55, 120, 122);
-
-    EXPECT_TRUE(ba.isSwitched());
-    EXPECT_TRUE(ba.isSwitched());
-    GTEST_EXPECT_FALSE(ba.isSwitched());
+    // grab button press with first mock returns
+    ba.getButtonState();
+    // STILL LOW after 5 millis
+    EXPECT_EQ(HELD, ba.getButtonState());
 }
 
-TEST(agent, isDown) {
+TEST(agent, getButtonState_released) {
     MockButton mockButton;
-    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
-
-    buttonAgent ba(mockButton);
-
-    GTEST_EXPECT_FALSE(ba.isDown());
-
-    EXPECT_CALL(mockButton, readState())
-            .WillOnce(Return(LOW));
-    When(Method(ArduinoFake(Function), millis)).Return(55);
-
-    EXPECT_TRUE(ba.isSwitched());
-
-    EXPECT_TRUE(ba.isDown());
-
-}
-
-TEST(agent, doOnPress) {
-    MockButton mockButton;
-    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
-
-    buttonAgent ba(mockButton);
-
-    EXPECT_CALL(mockButton, readState())
-            .WillOnce(Return(LOW));
-    When(Method(ArduinoFake(Function), millis)).Return(55);
-
-    EXPECT_TRUE(ba.onPress());
-}
-
-TEST(agent, doOnRelease) {
-    MockButton mockButton;
-    ON_CALL(mockButton, isPullUp()).WillByDefault(Return(true));
+    EXPECT_CALL(mockButton, isPullUp()).WillOnce(Return(true));
 
     buttonAgent ba(mockButton);
 
     EXPECT_CALL(mockButton, readState())
             .WillOnce(Return(LOW))
             .WillOnce(Return(HIGH));
-    When(Method(ArduinoFake(Function), millis)).Return(55, 155);
-    ba.isSwitched();
+    When(Method(ArduinoFake(Function), millis)).Return(55, 200);
 
-    EXPECT_TRUE(ba.onRelease());
+    // grab button press with first mock returns
+    ba.getButtonState();
+    // LOW -> HIGH after 145 millis
+    EXPECT_EQ(RELEASED, ba.getButtonState());
 }
+
+TEST(agent, getButtonState_up) {
+    MockButton mockButton;
+    EXPECT_CALL(mockButton, isPullUp()).WillOnce(Return(true));
+
+    buttonAgent ba(mockButton);
+
+    EXPECT_CALL(mockButton, readState())
+            .WillOnce(Return(LOW))
+            .WillOnce(Return(HIGH))
+            .WillOnce(Return(HIGH));
+    When(Method(ArduinoFake(Function), millis)).Return(55, 200, 205);
+
+    // grab button press with first mock returns
+    ba.getButtonState();
+    // grab button release with second mock returns
+    ba.getButtonState();
+    // STILL HIGH after 5 millis
+    EXPECT_EQ(UP, ba.getButtonState());
+}
+
 
 
 #if defined(ARDUINO)
@@ -108,13 +129,13 @@ void loop() {
 }
 
 #else
-int main(int argc, char **argv)
-{
+
+int main(int argc, char **argv) {
 //    ::testing::InitGoogleTest(&argc, argv);
     ::testing::InitGoogleMock(&argc, argv);
-    if (RUN_ALL_TESTS())
-    ;
+    if (RUN_ALL_TESTS());
     // Always return zero-code and allow PlatformIO to parse results
     return 0;
 }
+
 #endif
