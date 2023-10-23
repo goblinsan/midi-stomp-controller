@@ -26,6 +26,7 @@ public:
         if (switched && !down) return RELEASED;
         if (!switched && down) return HELD;
         if (!switched && !down) return UP;
+        return UP;
     }
 
     bool isSwitched(bool st_change, bool rdx) {
@@ -53,17 +54,10 @@ public:
         return currentState != lastState;
     }
 
-    bool isDown() override {
+    bool isDown() {
         return currentState != defaultState;
     }
 
-    int onPress() override {
-        return getButtonState() && isDown();
-    }
-
-    int onRelease() override {
-        return getButtonState() && !isDown();
-    }
 
 private:
     unsigned long currentClockTime = 0;

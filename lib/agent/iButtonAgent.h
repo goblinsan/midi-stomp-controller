@@ -12,15 +12,8 @@ public:
 
     virtual buttonState getButtonState() = 0;
 
-    virtual bool isDown() = 0;
-
-    virtual int onPress() = 0;
-
-    virtual int onRelease() = 0;
-
 protected:
     iButton &b;
-
 };
 
 

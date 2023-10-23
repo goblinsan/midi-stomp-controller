@@ -1,3 +1,6 @@
+#ifndef MIDI_STOMP_CONTROLLER_MUXBUTTON
+#define MIDI_STOMP_CONTROLLER_MUXBUTTON
+
 #include "button.cpp"
 
 class muxButton : public button {
@@ -41,3 +44,4 @@ private:
     }
 };
 
+#endif

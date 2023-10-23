@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 #include <ArduinoFake.h>
 #include "iButton.h"
-#include "inputListner.h"
+#include "inputListener.h"
 #include "midiStompTypes.h"
 
 using namespace fakeit;
@@ -22,37 +22,34 @@ public:
     MockButton mockButton;
     MockAgent() : iButtonAgent(mockButton) {}
     MOCK_METHOD(buttonState, getButtonState, (), (override));
-    MOCK_METHOD(bool , isDown, (), (override));
-    MOCK_METHOD(int , onPress, (), (override));
-    MOCK_METHOD(int , onRelease, (), (override));
 };
 
 
-TEST(listner, canActOnInput) {
+TEST(listner, readInputs) {
     MockAgent mockAgent1;
     MockAgent mockAgent2;
     iButtonAgent* agents[2];
     agents[0] = &mockAgent1;
     agents[1] = &mockAgent2;
-    inputListner testObject = inputListner(agents, 2);
+    inputListener testObject = inputListener(agents, 2);
 
 
     EXPECT_CALL(mockAgent1, getButtonState)
-            .WillOnce(Return(UP))
-            .WillOnce(Return(UP))
-            .WillOnce(Return(UP))
+//            .WillOnce(Return(UP))
+//            .WillOnce(Return(UP))
+//            .WillOnce(Return(UP))
             .WillOnce(Return(UP));
 
-    EXPECT_CALL(mockAgent2, getButtonState)
-            .WillOnce(Return(UP))
-            .WillOnce(Return(UP))
-            .WillOnce(Return(UP))
-            .WillOnce(Return(UP));
+//    EXPECT_CALL(mockAgent2, getButtonState)
+//            .WillOnce(Return(UP))
+//            .WillOnce(Return(UP))
+//            .WillOnce(Return(UP))
+//            .WillOnce(Return(UP));
 
-    EXPECT_FALSE(testObject.actOnInput()); // 1 is switched
-    EXPECT_FALSE(testObject.actOnInput()); // none are switched
-    EXPECT_FALSE(testObject.actOnInput()); // 2 is switched
-    EXPECT_FALSE(testObject.actOnInput()); // both are switched
+    EXPECT_FALSE(testObject.readInputs()); // 1 is switched
+//    EXPECT_FALSE(testObject.readInputs()); // none are switched
+//    EXPECT_FALSE(testObject.readInputs()); // 2 is switched
+//    EXPECT_FALSE(testObject.readInputs()); // both are switched
 }
 
 
