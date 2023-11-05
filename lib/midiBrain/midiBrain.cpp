@@ -39,6 +39,7 @@ void midiBrain::readControlButtons(unsigned long currentTime) {
     buttonState chordState = chordAgent.getButtonState();
     if (chordState == PRESSED) {
         isChord = !isChord;
+        Serial.println("Chord pressed");
         updated = true;
     }
 
@@ -46,6 +47,18 @@ void midiBrain::readControlButtons(unsigned long currentTime) {
     if (arpeggioState == PRESSED) {
         isArpeggio = !isArpeggio;
         Serial.println("Arpeggio pressed");
+        updated = true;
+    }
+
+    buttonState chordTypeState = chordTypeAgent.getButtonState();
+    if (chordTypeState == PRESSED) {
+        Serial.println("Chord Type pressed");
+        updated = true;
+    }
+
+    buttonState tempoTapState = tempoTapAgent.getButtonState();
+    if (tempoTapState == PRESSED) {
+        Serial.println("Tempo pressed");
         updated = true;
     }
 
